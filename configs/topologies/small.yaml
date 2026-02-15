@@ -1,0 +1,70 @@
+name: small_enterprise
+
+nodes:
+  fw-ext:
+    node_type: firewall
+    os: linux
+    services: [dns]
+    value: 2.0
+    is_entry_point: true
+  web-1:
+    node_type: server
+    os: linux
+    services: [http, https, ssh]
+    value: 4.0
+    is_entry_point: true
+  web-2:
+    node_type: server
+    os: linux
+    services: [http, https, ssh]
+    value: 4.0
+    is_entry_point: true
+  router-1:
+    node_type: router
+    os: linux
+    services: [ssh]
+    value: 3.0
+  ws-1:
+    node_type: workstation
+    os: windows
+    services: [smb, rdp]
+    value: 2.0
+  ws-2:
+    node_type: workstation
+    os: windows
+    services: [smb, rdp]
+    value: 2.0
+  ws-3:
+    node_type: workstation
+    os: windows
+    services: [smb, rdp]
+    value: 2.0
+  app-1:
+    node_type: server
+    os: linux
+    services: [http, ssh]
+    value: 6.0
+  db-1:
+    node_type: database
+    os: linux
+    services: [mysql, ssh]
+    value: 9.0
+  db-2:
+    node_type: database
+    os: linux
+    services: [postgresql, ssh]
+    value: 10.0
+
+edges:
+  - {src: fw-ext, dst: web-1, segment: dmz}
+  - {src: fw-ext, dst: web-2, segment: dmz}
+  - {src: web-1, dst: router-1, segment: dmz-to-lan}
+  - {src: web-2, dst: router-1, segment: dmz-to-lan}
+  - {src: router-1, dst: ws-1, segment: lan}
+  - {src: router-1, dst: ws-2, segment: lan}
+  - {src: router-1, dst: ws-3, segment: lan}
+  - {src: router-1, dst: app-1, segment: lan}
+  - {src: ws-1, dst: ws-2, segment: lan}
+  - {src: ws-2, dst: ws-3, segment: lan}
+  - {src: app-1, dst: db-1, segment: lan-to-db}
+  - {src: app-1, dst: db-2, segment: lan-to-db}

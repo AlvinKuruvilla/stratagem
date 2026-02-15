@@ -1,0 +1,42 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "stratagem"
+version = "0.1.0"
+description = "Stackelberg security games powered by autonomous LLM agents"
+requires-python = ">=3.11"
+license = "MIT"
+dependencies = [
+    "langgraph>=0.3",
+    "langchain-openai>=0.3",
+    "networkx>=3.2",
+    "scipy>=1.14",
+    "numpy>=1.26",
+    "typer>=0.15",
+    "rich>=13.9",
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.8",
+]
+
+[project.scripts]
+stratagem = "stratagem.cli:app"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/stratagem"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
