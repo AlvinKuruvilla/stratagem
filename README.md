@@ -42,8 +42,8 @@ Built with [LangGraph](https://github.com/langchain-ai/langgraph) for agent orch
 │           └────────┬────────┘                        │
 │                    ▼                                 │
 │           ┌─────────────────┐                        │
-│           │  Evaluation     │                        │
-│           │  Engine         │                        │
+│           │  Web Dashboard  │                        │
+│           │  + Evaluation   │                        │
 │           └─────────────────┘                        │
 └─────────────────────────────────────────────────────┘
 ```
@@ -66,8 +66,30 @@ Built with [LangGraph](https://github.com/langchain-ai/langgraph) for agent orch
 ```bash
 git clone https://github.com/AlvinKuruvilla/stratagem.git
 cd stratagem
-pip install -e ".[dev]"
+pip install -e ".[web,dev]"
+cd frontend && npm install && cd ..
 ```
+
+Or with [just](https://github.com/casey/just):
+
+```bash
+just setup
+```
+
+### Run the Dashboard
+
+```bash
+# Start backend + frontend together
+just dev
+
+# Or separately:
+just backend   # FastAPI on http://localhost:8000
+just frontend  # Vite on http://localhost:5173
+```
+
+Then open http://localhost:5173 to explore equilibrium results interactively.
+
+### Other Commands
 
 ```bash
 # Run a single game with default topology
@@ -76,47 +98,77 @@ stratagem run --topology small --rounds 50
 # Benchmark against baselines
 stratagem benchmark --topology medium --trials 100
 
-# Launch the evaluation dashboard
-stratagem dashboard
+# Run tests
+just test
+
+# Lint + typecheck
+just ci
 ```
+
+Run `just` to see all available recipes.
 
 ## Project Structure
 
 ```
 stratagem/
 ├── src/stratagem/
-│   ├── agents/
-│   │   ├── defender.py        # Defender agent (leader)
-│   │   └── attacker.py        # Attacker agent (follower)
+│   ├── agents/                  # LangGraph agents (Phase 3)
 │   ├── game/
-│   │   ├── state.py           # Game state representation
-│   │   ├── graph.py           # LangGraph orchestration
-│   │   └── solver.py          # Stackelberg equilibrium solver
+│   │   ├── state.py             # Game state representation
+│   │   └── solver.py            # Stackelberg equilibrium solver (SSE via LP)
 │   ├── environment/
-│   │   ├── network.py         # Simulated network topology
-│   │   ├── deception.py       # Honeypots, decoys, fake credentials
-│   │   └── attack_surface.py  # MITRE ATT&CK action space
+│   │   ├── network.py           # Simulated network topologies (10/25/50 nodes)
+│   │   ├── deception.py         # Honeypots, decoy credentials, honeytokens
+│   │   └── attack_surface.py    # MITRE ATT&CK technique catalog (20 techniques)
 │   ├── evaluation/
-│   │   ├── metrics.py         # Detection rate, cost, dwell time
-│   │   ├── baselines.py       # Static/random/heuristic baselines
-│   │   └── dashboard.py       # Results visualization
-│   └── cli.py                 # CLI entrypoint
-├── configs/
-│   └── topologies/            # Network topology definitions
-├── tests/
+│   │   └── baselines.py         # Uniform, static, and heuristic baselines
+│   ├── web/
+│   │   ├── app.py               # FastAPI application with CORS
+│   │   ├── schemas.py           # Pydantic request/response models
+│   │   ├── converters.py        # Solution → API response conversion
+│   │   └── routes/
+│   │       ├── topology.py      # GET /api/topologies, /api/topologies/{name}
+│   │       ├── solver.py        # POST /api/solve
+│   │       └── compare.py       # POST /api/compare (SSE vs baselines)
+│   └── cli.py                   # CLI entrypoint (Typer)
+├── frontend/
+│   └── src/
+│       ├── api/                 # Typed fetch client + TS interfaces
+│       ├── state/               # Zustand store
+│       └── components/
+│           ├── layout/          # AppShell, ControlPanel
+│           ├── graph/           # React Flow network graph + dagre layout
+│           ├── charts/          # Recharts: attacker EU, defender comparison, coverage
+│           ├── panels/          # Node detail panel with KaTeX math rendering
+│           └── controls/        # Topology selector, budget slider, param controls
+├── configs/topologies/          # Custom YAML topology definitions
+├── tests/                       # 75 tests (solver properties, baselines, network)
+├── justfile                     # Task runner recipes
 ├── pyproject.toml
 └── README.md
 ```
+
+## Web Dashboard
+
+The interactive dashboard visualizes Stackelberg equilibrium results:
+
+- **Network Graph** — React Flow visualization with coverage heatmap (green → yellow → red by detection probability). Attacker targets highlighted in gold, entry points shown with dashed borders.
+- **Budget Slider** — Drag to adjust the defender's deception budget; the graph and charts re-solve live (~300ms debounce).
+- **Indifference Principle** — Horizontal bar chart showing attacker EU per node. The SSE equalizes the top targets (bars align at the equilibrium reference line).
+- **Node Detail Panel** — Click any node to see its value, coverage allocation, and full utility formulas rendered with KaTeX.
+- **Baseline Comparison** — Toggle to compare SSE against uniform, static (value-based), and heuristic (centrality-based) baselines. Side-by-side charts show defender EU gap and per-node detection probability differences.
+
+**Stack:** React 19, TypeScript, Vite, Tailwind CSS v4, React Flow, Recharts, KaTeX, Zustand.
 
 ## How It Works
 
 1. **Environment Setup** — A network topology is loaded with nodes (servers, workstations, databases) and edges (network connections). Each node has properties like OS, services, and value to the defender.
 
-2. **Defender Commits** — The defender agent analyzes the network and commits to a mixed strategy: probability distributions over where to place honeypots, decoy credentials, and fake services. The Stackelberg solver computes the optimal mixed strategy.
+2. **Defender Commits** — The defender agent analyzes the network and commits to a mixed strategy: probability distributions over where to place honeypots, decoy credentials, and honeytokens. The Stackelberg solver computes the optimal mixed strategy via linear programming.
 
-3. **Attacker Responds** — The attacker agent observes the defense posture (with configurable partial observability) and plans an optimal attack path through the network using MITRE ATT&CK techniques as its action space.
+3. **Attacker Responds** — The attacker observes the defense posture and selects the target node that maximizes their expected utility. The SSE ensures this best response is accounted for in the defender's strategy.
 
-4. **Evaluation** — The game runs for N rounds. Detection events, attacker dwell time, and defender resource usage are logged. Results are compared against static and random baselines.
+4. **Evaluation** — The solution is compared against three baselines (uniform, static, heuristic). The SSE weakly dominates all baselines by construction — it optimizes defender utility subject to the attacker's strategic response.
 
 ## License
 

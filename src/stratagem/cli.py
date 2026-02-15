@@ -69,9 +69,20 @@ def benchmark(
 
 
 @app.command()
-def dashboard() -> None:
-    """Launch the evaluation results dashboard."""
-    console.print("[yellow]Dashboard not yet implemented — coming in Phase 4.[/yellow]")
+def dashboard(
+    host: str = typer.Option("127.0.0.1", help="Host to bind to."),
+    port: int = typer.Option(8000, help="Port to bind to."),
+) -> None:
+    """Launch the web dashboard (FastAPI + Vite dev server)."""
+    try:
+        import uvicorn
+    except ImportError:
+        console.print("[red]Web dependencies not installed. Run: pip install -e '.[web]'[/red]")
+        raise typer.Exit(1)
+
+    console.print(f"[bold green]Starting Stratagem dashboard on http://{host}:{port}[/bold green]")
+    console.print("[dim]API docs: http://{host}:{port}/docs[/dim]")
+    uvicorn.run("stratagem.web.app:app", host=host, port=port, reload=True)
 
 
 @app.command(name="topology")

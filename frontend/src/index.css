@@ -1,0 +1,21 @@
+@import "tailwindcss";
+
+@theme {
+  --color-node-low: #22c55e;
+  --color-node-mid: #eab308;
+  --color-node-high: #ef4444;
+  --color-sse: #3b82f6;
+  --color-uniform: #a855f7;
+  --color-static: #f97316;
+  --color-heuristic: #14b8a6;
+}
+
+/* React Flow overrides */
+.react-flow__node {
+  font-size: 11px;
+}
+
+.react-flow__edge-path {
+  stroke: #4b5563;
+  stroke-width: 1.5;
+}
