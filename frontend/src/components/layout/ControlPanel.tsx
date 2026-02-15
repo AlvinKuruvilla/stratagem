@@ -4,6 +4,7 @@ import ParamControls from "../controls/ParamControls";
 import BaselineToggle from "../controls/BaselineToggle";
 import ModeToggle from "../controls/ModeToggle";
 import PlayControls from "../controls/PlayControls";
+import BenchmarkControls from "../controls/BenchmarkControls";
 import { useGameStore } from "../../state/useGameStore";
 
 function SectionLabel({ children }: { children: string }) {
@@ -15,7 +16,7 @@ function SectionLabel({ children }: { children: string }) {
 }
 
 export default function ControlPanel() {
-  const { mode, solution, play } = useGameStore();
+  const { mode, solution, play, benchmark } = useGameStore();
 
   return (
     <aside className="w-64 shrink-0 bg-surface-1 border-r border-border-default flex flex-col overflow-y-auto">
@@ -61,10 +62,15 @@ export default function ControlPanel() {
               <BaselineToggle />
             </div>
           </>
-        ) : (
+        ) : mode === "play" ? (
           <div className="space-y-2">
             <SectionLabel>Game Setup</SectionLabel>
             <PlayControls />
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <SectionLabel>Benchmark Setup</SectionLabel>
+            <BenchmarkControls />
           </div>
         )}
       </div>
@@ -121,6 +127,30 @@ export default function ControlPanel() {
               </span>
             </p>
           )}
+        </div>
+      )}
+
+      {mode === "benchmark" && benchmark.result && (
+        <div className="mt-auto border-t border-border-default px-5 py-4 text-xs space-y-1.5">
+          <SectionLabel>Benchmark Result</SectionLabel>
+          <p className="text-gray-400">
+            Trials:{" "}
+            <span className="text-blue-400 font-mono font-medium">
+              {benchmark.result.num_trials}
+            </span>
+          </p>
+          <p className="text-gray-400">
+            Strategies:{" "}
+            <span className="text-green-400 font-mono font-medium">
+              {benchmark.result.strategies.length}
+            </span>
+          </p>
+          <p className="text-gray-400">
+            Topologies:{" "}
+            <span className="text-yellow-400 font-mono font-medium">
+              {benchmark.result.topologies.join(", ")}
+            </span>
+          </p>
         </div>
       )}
     </aside>

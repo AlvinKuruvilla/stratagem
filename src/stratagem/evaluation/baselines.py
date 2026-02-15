@@ -61,7 +61,6 @@ from stratagem.environment.deception import (
 from stratagem.environment.network import NetworkTopology
 from stratagem.game.solver import StackelbergSolution, UtilityParams
 
-
 # ───────────────────────────────────────────────────────────────────────
 # Attacker best response (shared across all baselines)
 # ───────────────────────────────────────────────────────────────────────

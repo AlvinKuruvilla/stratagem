@@ -9,6 +9,7 @@ import DefenderEUCompare from "./components/charts/DefenderEUCompare";
 import CoverageSideBySide from "./components/charts/CoverageSideBySide";
 import GameResultBanner from "./components/panels/GameResultBanner";
 import ActionLog from "./components/panels/ActionLog";
+import BenchmarkDashboard from "./components/benchmark/BenchmarkDashboard";
 
 export default function App() {
   const { init, loading, error, mode, showBaselines } = useGameStore();
@@ -53,12 +54,14 @@ export default function App() {
             </div>
           )}
         </>
-      ) : (
+      ) : mode === "play" ? (
         <>
           <GameResultBanner />
           <NetworkGraph />
           <ActionLog />
         </>
+      ) : (
+        <BenchmarkDashboard />
       )}
     </AppShell>
   );

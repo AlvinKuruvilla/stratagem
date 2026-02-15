@@ -85,3 +85,52 @@ class PlayGameRequest(BaseModel):
     max_rounds: int = Field(default=5, ge=1, le=50)
     seed: int = 42
     defender_strategy: str = "sse_optimal"  # sse_optimal | uniform | static | heuristic
+
+
+# ── Benchmark models ─────────────────────────────────────────────────
+
+
+class BenchmarkRequest(BaseModel):
+    topologies: list[str] = Field(default=["small"])
+    strategies: list[str] = Field(default=["sse_optimal", "uniform", "static", "heuristic"])
+    num_trials: int = Field(default=50, ge=1, le=500)
+    max_rounds: int = Field(default=10, ge=1, le=50)
+    budget: float = Field(default=10.0, ge=0)
+    base_seed: int = 42
+
+
+class MetricSummaryResponse(BaseModel):
+    mean: float
+    std: float
+    ci_lower: float
+    ci_upper: float
+    n: int
+
+
+class StrategyMetricsResponse(BaseModel):
+    strategy: str
+    topology: str
+    num_trials: int
+    detection_rate: MetricSummaryResponse
+    mean_time_to_detect: MetricSummaryResponse
+    cost_efficiency: MetricSummaryResponse
+    attacker_dwell_time: MetricSummaryResponse
+    defender_utility: MetricSummaryResponse
+    attacker_exfiltration: MetricSummaryResponse
+
+
+class PairwiseComparisonResponse(BaseModel):
+    strategy_a: str
+    strategy_b: str
+    metric: str
+    u_statistic: float
+    p_value: float
+    significant: bool
+
+
+class BenchmarkResponse(BaseModel):
+    strategy_metrics: list[StrategyMetricsResponse]
+    comparisons: list[PairwiseComparisonResponse]
+    num_trials: int
+    topologies: list[str]
+    strategies: list[str]

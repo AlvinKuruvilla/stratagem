@@ -5,6 +5,7 @@ import { api, streamGame } from "../api/client";
 import type {
   ActionLogEntry,
   AttackerActionEvent,
+  BenchmarkResponse,
   CompareResponse,
   DeployedAsset,
   DefenderSetupEvent,
@@ -35,6 +36,24 @@ interface PlayState {
   actionLog: ActionLogEntry[];
 }
 
+interface BenchmarkState {
+  status: "idle" | "running" | "finished";
+  trials: number;
+  budget: number;
+  maxRounds: number;
+  topologies: string[];
+  result: BenchmarkResponse | null;
+}
+
+const initialBenchmarkState: BenchmarkState = {
+  status: "idle",
+  trials: 50,
+  budget: 10.0,
+  maxRounds: 10,
+  topologies: ["small"],
+  result: null,
+};
+
 const initialPlayState: PlayState = {
   status: "idle",
   budget: 10.0,
@@ -54,7 +73,7 @@ const initialPlayState: PlayState = {
 
 interface GameState {
   // Mode
-  mode: "solver" | "play";
+  mode: "solver" | "play" | "benchmark";
 
   // Topology
   topologies: TopologyStats[];
@@ -75,6 +94,9 @@ interface GameState {
   play: PlayState;
   playController: AbortController | null;
 
+  // Benchmark mode
+  benchmark: BenchmarkState;
+
   // UI
   selectedNodeId: string | null;
   loading: boolean;
@@ -82,7 +104,7 @@ interface GameState {
 
   // Actions
   init: () => Promise<void>;
-  setMode: (mode: "solver" | "play") => void;
+  setMode: (mode: "solver" | "play" | "benchmark") => void;
   setTopology: (name: string) => Promise<void>;
   setBudget: (budget: number) => void;
   setAlpha: (alpha: number) => void;
@@ -100,6 +122,13 @@ interface GameState {
   startGame: () => void;
   stopGame: () => void;
   handleGameEvent: (eventType: string, data: unknown) => void;
+
+  // Benchmark actions
+  setBenchmarkTrials: (trials: number) => void;
+  setBenchmarkBudget: (budget: number) => void;
+  setBenchmarkMaxRounds: (maxRounds: number) => void;
+  setBenchmarkTopologies: (topologies: string[]) => void;
+  runBenchmark: () => Promise<void>;
 }
 
 export const useGameStore = create<GameState>((set, get) => ({
@@ -115,6 +144,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   showBaselines: false,
   play: { ...initialPlayState },
   playController: null,
+  benchmark: { ...initialBenchmarkState },
   selectedNodeId: null,
   loading: false,
   error: null,
@@ -364,5 +394,48 @@ export const useGameStore = create<GameState>((set, get) => ({
       play.actionLog = log;
       return { play };
     });
+  },
+
+  // Benchmark actions
+
+  setBenchmarkTrials: (trials) => {
+    set((s) => ({ benchmark: { ...s.benchmark, trials } }));
+  },
+
+  setBenchmarkBudget: (budget) => {
+    set((s) => ({ benchmark: { ...s.benchmark, budget } }));
+  },
+
+  setBenchmarkMaxRounds: (maxRounds) => {
+    set((s) => ({ benchmark: { ...s.benchmark, maxRounds } }));
+  },
+
+  setBenchmarkTopologies: (topologies) => {
+    set((s) => ({ benchmark: { ...s.benchmark, topologies } }));
+  },
+
+  runBenchmark: async () => {
+    const { benchmark } = get();
+    set((s) => ({
+      benchmark: { ...s.benchmark, status: "running", result: null },
+      error: null,
+    }));
+
+    try {
+      const result = await api.benchmark({
+        topologies: benchmark.topologies,
+        num_trials: benchmark.trials,
+        max_rounds: benchmark.maxRounds,
+        budget: benchmark.budget,
+      });
+      set((s) => ({
+        benchmark: { ...s.benchmark, status: "finished", result },
+      }));
+    } catch (e) {
+      set((s) => ({
+        error: (e as Error).message,
+        benchmark: { ...s.benchmark, status: "idle" },
+      }));
+    }
   },
 }));

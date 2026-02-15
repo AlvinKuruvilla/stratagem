@@ -84,13 +84,60 @@ def run(
 
 @app.command()
 def benchmark(
-    topology: str = typer.Option("small", help="Topology preset or YAML path."),
+    topology: str = typer.Option("all", help="Topology preset (small/medium/large) or 'all'."),
     trials: int = typer.Option(100, help="Number of trial runs per strategy."),
+    max_rounds: int = typer.Option(10, help="Maximum rounds per game."),
+    budget: float = typer.Option(10.0, help="Defender budget."),
+    seed: int = typer.Option(42, help="Base random seed."),
+    output: str = typer.Option("", help="Path for JSON results export."),
+    csv_output: str = typer.Option("", help="Path for CSV trial export."),
 ) -> None:
     """Benchmark Stackelberg-optimal strategy against baselines."""
-    topo = _resolve_topology(topology)
-    console.print(f"[bold]Benchmarking on {topo.name} ({trials} trials)[/bold]")
-    console.print("[yellow]Benchmark engine not yet implemented — coming in Phase 4.[/yellow]")
+    from rich.progress import Progress
+
+    from stratagem.evaluation.benchmark import (
+        BenchmarkConfig,
+        export_results_csv,
+        export_results_json,
+        run_benchmark,
+    )
+    from stratagem.evaluation.dashboard import render_benchmark_dashboard
+
+    topologies = ["small", "medium", "large"] if topology == "all" else [topology]
+
+    config = BenchmarkConfig(
+        topologies=topologies,
+        num_trials=trials,
+        max_rounds=max_rounds,
+        budget=budget,
+        base_seed=seed,
+    )
+
+    total = len(topologies) * len(config.strategies) * trials
+    n_strat = len(config.strategies)
+    n_topo = len(topologies)
+    console.print(
+        f"[bold]Benchmarking {n_strat} strategies x "
+        f"{n_topo} topologies x {trials} trials = {total} games[/bold]\n"
+    )
+
+    with Progress(console=console) as progress:
+        task = progress.add_task("Running benchmark...", total=total)
+
+        def on_progress(desc: str, current: int, total: int) -> None:
+            progress.update(task, completed=current, description=f"[cyan]{desc}[/cyan]")
+
+        result = run_benchmark(config, progress_callback=on_progress)
+
+    render_benchmark_dashboard(result, console=console)
+
+    if output:
+        export_results_json(result, output)
+        console.print(f"\n[green]JSON results saved to {output}[/green]")
+
+    if csv_output:
+        export_results_csv(result.trial_results, csv_output)
+        console.print(f"[green]CSV trials saved to {csv_output}[/green]")
 
 
 @app.command()

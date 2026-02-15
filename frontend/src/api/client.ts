@@ -1,6 +1,8 @@
 /** Typed fetch wrappers for the Stratagem API. */
 
 import type {
+  BenchmarkRequest,
+  BenchmarkResponse,
   CompareResponse,
   PlayGameRequest,
   SolveRequest,
@@ -95,4 +97,5 @@ export const api = {
   getTopology: (name: string) => get<TopologyResponse>(`/topologies/${name}`),
   solve: (req: SolveRequest) => post<SolutionResponse>("/solve", req),
   compare: (req: SolveRequest) => post<CompareResponse>("/compare", req),
+  benchmark: (req: BenchmarkRequest) => post<BenchmarkResponse>("/benchmark", req),
 };

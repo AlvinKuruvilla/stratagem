@@ -150,3 +150,51 @@ export interface GameEndEvent {
   attacker_path: string[];
   compromised_nodes: string[];
 }
+
+// ── Benchmark types ──────────────────────────────────
+
+export interface BenchmarkMetricSummary {
+  mean: number;
+  std: number;
+  ci_lower: number;
+  ci_upper: number;
+  n: number;
+}
+
+export interface StrategyMetricsResponse {
+  strategy: string;
+  topology: string;
+  num_trials: number;
+  detection_rate: BenchmarkMetricSummary;
+  mean_time_to_detect: BenchmarkMetricSummary;
+  cost_efficiency: BenchmarkMetricSummary;
+  attacker_dwell_time: BenchmarkMetricSummary;
+  defender_utility: BenchmarkMetricSummary;
+  attacker_exfiltration: BenchmarkMetricSummary;
+}
+
+export interface PairwiseComparisonResponse {
+  strategy_a: string;
+  strategy_b: string;
+  metric: string;
+  u_statistic: number;
+  p_value: number;
+  significant: boolean;
+}
+
+export interface BenchmarkRequest {
+  topologies: string[];
+  strategies?: string[];
+  num_trials: number;
+  max_rounds?: number;
+  budget?: number;
+  base_seed?: number;
+}
+
+export interface BenchmarkResponse {
+  strategy_metrics: StrategyMetricsResponse[];
+  comparisons: PairwiseComparisonResponse[];
+  num_trials: number;
+  topologies: string[];
+  strategies: string[];
+}
