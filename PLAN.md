@@ -82,7 +82,7 @@
 
 ---
 
-## Phase 3: LangGraph Agents ⬅️ NEXT
+## Phase 3: LangGraph Agents ✅
 
 ### 3.1 Defender Agent (`src/stratagem/agents/defender.py`)
 - LangGraph node wrapping an LLM (GPT-4o or Claude)
@@ -121,51 +121,86 @@
 
 ---
 
-## Phase 4: Evaluation & Metrics
+## Phase 4: Evaluation & Metrics ✅
 
-### 4.1 Metrics Engine (`src/stratagem/evaluation/metrics.py`)
-- **Attacker Detection Rate** — % of games where attacker was detected before reaching goal
-- **Mean Time to Detect** — average round at which first detection occurs
-- **Defender Cost Efficiency** — detection rate per unit of budget spent
-- **Attacker Dwell Time** — rounds attacker spends in the network before detection or goal completion
-- **Defender Utility** — cumulative game-theoretic utility across trials
-- All metrics computed over N trial runs with confidence intervals
+> **Status:** Complete — 174/174 tests passing, benchmark engine + CLI + API + web dashboard functional.
 
-### 4.2 Benchmark Runner
-- Run Stackelberg-optimal strategy vs. all baselines on each topology size
-- Record per-trial results to JSON/CSV
-- Statistical significance tests (Mann-Whitney U) for metric comparisons
+### 4.1 Metrics Engine (`src/stratagem/evaluation/metrics.py`) ✅
+- `TrialResult` dataclass capturing per-game outcomes
+- `extract_trial_result()` pure function: final game state → metrics
+- `compute_metrics()` aggregates trials into `StrategyMetrics` with:
+  - **Detection Rate** with Wilson score 95% CI
+  - **Mean Time to Detect** (detected trials only)
+  - **Cost Efficiency** (detection rate / budget spent)
+  - **Attacker Dwell Time**
+  - **Defender Utility** (composite score)
+  - **Attacker Exfiltration**
+- `compare_strategies()` / `compare_all_pairs()` — Mann-Whitney U tests for statistical significance
 
-### 4.3 Dashboard (`src/stratagem/evaluation/dashboard.py`)
-- `rich`-based terminal dashboard showing:
-  - Metric comparison table (Stackelberg vs baselines)
-  - Per-round detection timeline
-  - Network topology visualization (ASCII or simple)
+### 4.2 Benchmark Runner (`src/stratagem/evaluation/benchmark.py`) ✅
+- `run_game_sync()` — synchronous fast game runner (same logic as SSE stream, no async/sleep)
+- `BenchmarkConfig` / `BenchmarkResult` dataclasses
+- `run_benchmark()` orchestrator: sweeps strategies × topologies × N trials with shared attacker paths
+- `export_results_json()` / `export_results_csv()` for downstream analysis
+
+### 4.3 Rich Terminal Dashboard (`src/stratagem/evaluation/dashboard.py`) ✅
+- Strategy comparison table (Det. Rate, MTTD, Cost Eff., Dwell Time, Utility, Exfil)
+- Statistical significance table (Mann-Whitney U, p-values, YES/no badges)
+- Summary panel with headline SSE-vs-baseline improvement percentages
+
+### 4.4 CLI Integration ✅
+- `stratagem benchmark` with `--topology`, `--trials`, `--max-rounds`, `--budget`, `--seed`, `--output`, `--csv-output`
+- Rich progress bar during execution
+
+### 4.5 Web API + Frontend ✅
+- `POST /api/benchmark` endpoint with Pydantic request/response models
+- React "Bench" mode tab with controls (trials slider, budget, topology checkboxes)
+- Recharts grouped bar chart for detection rate, detailed metrics table, significance badges
 
 ---
 
-## Phase 5: CLI & Polish
+## Phase 5: Run Benchmark & Interpret Results ⬅️ NEXT
 
-### 5.1 CLI (`src/stratagem/cli.py`)
-- Wire `stratagem run` to the game engine (Phase 3)
-- Wire `stratagem benchmark` to the benchmark runner (Phase 4)
-- Wire `stratagem dashboard` to the dashboard (Phase 4)
-- `stratagem topology list` ✅ and `stratagem topology show <name>` ✅ already functional
+> **Why this is next:** Phases 1–4 built the solver, baselines, game engine, and
+> evaluation pipeline. The benchmark is ready to run but hasn't been executed yet.
+> Running it will fill in the X% and Y% in the resume bullet and reveal whether
+> the SSE solver actually dominates the baselines in simulated play — not just in
+> theoretical EU, but in empirical detection rate and dwell time. This is the
+> payoff for all the infrastructure work.
 
-### 5.2 Testing
-- Unit tests for solver (verify equilibrium properties)
-- ~~Unit tests for environment (topology generation, attack mechanics)~~ ✅ Done
+### 5.1 Run the Benchmark
+- `stratagem benchmark --topology all --trials 100 --output results.json --csv-output trials.csv`
+- Examine the Rich dashboard output: which strategy wins on each topology?
+- Check statistical significance: are the differences real (p < 0.05)?
+
+### 5.2 Interpret & Validate
+- **Detection rate:** Does SSE achieve higher detection than all 3 baselines? By how much?
+- **MTTD:** Does SSE detect earlier? Is the difference meaningful?
+- **Dwell time:** Do attackers spend fewer rounds active under SSE?
+- **Exfiltration:** Does SSE reduce total value stolen?
+- **Cost efficiency:** Is SSE a better use of budget?
+- Check per-topology patterns: does SSE advantage grow with network size?
+- Investigate any surprises (e.g., a baseline beating SSE on some metric)
+
+### 5.3 Fill in the Resume Bullet
+- Replace X% and Y% with actual numbers from the benchmark
+- If results aren't compelling, investigate: are game parameters realistic? Is the attacker stub too simple?
+
+### 5.4 Remaining Polish
+- Wire `stratagem run` to the LLM game engine (currently uses stubs)
 - Integration test for full game loop (defender → attacker → evaluate)
-- Baseline sanity checks (Stackelberg should weakly dominate random)
+- `stratagem topology list` ✅ and `stratagem topology show <name>` ✅ already functional
+- `stratagem benchmark` ✅ wired and functional
+- `stratagem dashboard` ✅ launches FastAPI + Vite
 
 ---
 
 ## Implementation Order
 
 ```
-Phase 1 ✅ → Phase 2 ✅ → Phase 2.5 ✅ → 3.3 → 3.1 → 3.2 → 4.1 → 4.2 → 4.3 → 5.1 → 5.2
-                                           ^^^
-                                         YOU ARE HERE
+Phase 1 ✅ → Phase 2 ✅ → Phase 2.5 ✅ → Phase 3 ✅ → Phase 4 ✅ → Phase 5
+                                                                       ^^^
+                                                                  YOU ARE HERE
 ```
 
 ## Resume Bullet Target
