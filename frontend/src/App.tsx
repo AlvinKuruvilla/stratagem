@@ -7,9 +7,11 @@ import NodeDetailPanel from "./components/panels/NodeDetailPanel";
 import AttackerEUChart from "./components/charts/AttackerEUChart";
 import DefenderEUCompare from "./components/charts/DefenderEUCompare";
 import CoverageSideBySide from "./components/charts/CoverageSideBySide";
+import GameResultBanner from "./components/panels/GameResultBanner";
+import ActionLog from "./components/panels/ActionLog";
 
 export default function App() {
-  const { init, loading, error, showBaselines } = useGameStore();
+  const { init, loading, error, mode, showBaselines } = useGameStore();
 
   useEffect(() => {
     init();
@@ -37,16 +39,26 @@ export default function App() {
         </div>
       )}
 
-      <IndifferenceBanner />
-      <NetworkGraph />
-      <NodeDetailPanel />
-      <AttackerEUChart />
+      {mode === "solver" ? (
+        <>
+          <IndifferenceBanner />
+          <NetworkGraph />
+          <NodeDetailPanel />
+          <AttackerEUChart />
 
-      {showBaselines && (
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-          <DefenderEUCompare />
-          <CoverageSideBySide />
-        </div>
+          {showBaselines && (
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+              <DefenderEUCompare />
+              <CoverageSideBySide />
+            </div>
+          )}
+        </>
+      ) : (
+        <>
+          <GameResultBanner />
+          <NetworkGraph />
+          <ActionLog />
+        </>
       )}
     </AppShell>
   );

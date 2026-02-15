@@ -46,14 +46,40 @@ def _resolve_topology(name: str) -> NetworkTopology:
 
 @app.command()
 def run(
-    topology: str = typer.Option("small", help="Topology preset (small/medium/large) or YAML path."),
+    topology: str = typer.Option(
+        "small", help="Topology preset (small/medium/large) or YAML path."
+    ),
     rounds: int = typer.Option(50, help="Maximum game rounds."),
+    budget: float = typer.Option(10.0, help="Defender budget."),
+    model: str = typer.Option("got-oss:20b", help="LLM model name."),
+    base_url: str = typer.Option(
+        "http://localhost:1234/v1", help="OpenAI-compatible API URL."
+    ),
+    seed: int = typer.Option(42, help="Random seed for reproducibility."),
 ) -> None:
     """Run a single Stackelberg security game."""
+    from stratagem.game.graph import build_game_graph, create_initial_state
+
     topo = _resolve_topology(topology)
     console.print(f"[bold]{topo.summary()}[/bold]")
-    console.print(f"Max rounds: {rounds}")
-    console.print("[yellow]Game engine not yet implemented — coming in Phase 3.[/yellow]")
+    console.print(f"Max rounds: {rounds}, budget: {budget}, seed: {seed}")
+    console.print(f"LLM: {model} @ {base_url}\n")
+
+    state = create_initial_state(topo, budget, rounds, seed=seed)
+    graph = build_game_graph(model=model, base_url=base_url)
+    compiled = graph.compile()
+
+    console.print("[bold green]Starting game...[/bold green]\n")
+    final_state = compiled.invoke(state)
+
+    console.print("\n[bold]Game Over![/bold]")
+    console.print(f"Winner: [bold cyan]{final_state['winner']}[/bold cyan]")
+    console.print(f"Rounds played: {final_state['current_round'] - 1}/{rounds}")
+
+    attacker = final_state["attacker"]
+    console.print(f"Attacker exfiltrated: {attacker['exfiltrated_value']:.1f}")
+    console.print(f"Attacker detected: {attacker['detected']}")
+    console.print(f"Detections: {len(final_state['detections'])}")
 
 
 @app.command()

@@ -5,6 +5,7 @@ import dagre from "dagre";
 import type { Node, Edge } from "@xyflow/react";
 import type { TopologyResponse } from "../../api/types";
 import type { SolutionResponse } from "../../api/types";
+import type { DeployedAsset } from "../../api/types";
 
 const NODE_WIDTH = 140;
 const NODE_HEIGHT = 50;
@@ -18,16 +19,25 @@ function coverageColor(p: number): string {
 }
 
 /** Subtle glow for target / selected nodes. */
-function nodeBoxShadow(isTarget: boolean, isSelected: boolean): string {
+function nodeBoxShadow(isTarget: boolean, isSelected: boolean, isAttackerHere: boolean): string {
+  if (isAttackerHere) return "0 0 16px rgba(239, 68, 68, 0.4)";
   if (isTarget) return "0 0 12px rgba(250, 204, 21, 0.25)";
   if (isSelected) return "0 0 12px rgba(59, 130, 246, 0.25)";
   return "none";
+}
+
+export interface PlayStateForGraph {
+  attackerPosition: string;
+  attackerPath: string[];
+  compromisedNodes: string[];
+  deployedAssets: DeployedAsset[];
 }
 
 export function useLayoutNodes(
   topology: TopologyResponse | null,
   solution: SolutionResponse | null,
   selectedNodeId: string | null,
+  playState?: PlayStateForGraph | null,
 ) {
   return useMemo(() => {
     if (!topology) return { nodes: [] as Node[], edges: [] as Edge[] };
@@ -51,12 +61,44 @@ export function useLayoutNodes(
 
     dagre.layout(g);
 
+    // Play-mode sets for quick lookup
+    const compromisedSet = new Set(playState?.compromisedNodes ?? []);
+    const pathSet = new Set(playState?.attackerPath ?? []);
+    const assetsByNode = new Map<string, DeployedAsset[]>();
+    if (playState) {
+      for (const asset of playState.deployedAssets) {
+        const list = assetsByNode.get(asset.node_id) ?? [];
+        list.push(asset);
+        assetsByNode.set(asset.node_id, list);
+      }
+    }
+
     const nodes: Node[] = topology.nodes.map((node) => {
       const pos = g.node(node.id);
       const breakdown = breakdownMap.get(node.id);
       const p = breakdown?.detection_probability ?? 0;
       const isTarget = solution?.attacker_target === node.id;
       const isSelected = selectedNodeId === node.id;
+      const isAttackerHere = playState?.attackerPosition === node.id;
+      const isCompromised = compromisedSet.has(node.id);
+      const nodeAssets = assetsByNode.get(node.id) ?? [];
+
+      let bg = coverageColor(p);
+      if (playState && isCompromised) bg = "#92400e"; // amber-800
+
+      let border = isTarget
+        ? "2px solid #facc15"
+        : node.is_entry_point
+          ? "2px dashed #60a5fa"
+          : isSelected
+            ? "2px solid #3b82f6"
+            : "1px solid #27272a";
+
+      if (playState && isAttackerHere) {
+        border = "3px solid #ef4444";
+      } else if (playState && isCompromised) {
+        border = "2px solid #f59e0b";
+      }
 
       return {
         id: node.id,
@@ -71,19 +113,16 @@ export function useLayoutNodes(
           isEntryPoint: node.is_entry_point,
           isTarget,
           detectionProb: p,
+          isAttackerHere: !!isAttackerHere,
+          isCompromised,
+          deployedAssets: nodeAssets,
         },
         type: "gameNode",
         style: {
           width: NODE_WIDTH,
           height: NODE_HEIGHT,
-          background: coverageColor(p),
-          border: isTarget
-            ? "2px solid #facc15"
-            : node.is_entry_point
-              ? "2px dashed #60a5fa"
-              : isSelected
-                ? "2px solid #3b82f6"
-                : "1px solid #27272a",
+          background: bg,
+          border,
           borderRadius: "8px",
           color: "#f9fafb",
           fontSize: "11px",
@@ -94,19 +133,38 @@ export function useLayoutNodes(
           padding: "4px",
           opacity: 1,
           cursor: "pointer",
-          boxShadow: nodeBoxShadow(!!isTarget, isSelected),
-          transition: "border 0.15s ease, box-shadow 0.15s ease",
+          boxShadow: nodeBoxShadow(!!isTarget, isSelected, !!isAttackerHere),
+          transition: "border 0.15s ease, box-shadow 0.15s ease, background 0.15s ease",
         },
       };
     });
 
-    const edges: Edge[] = topology.edges.map((edge, i) => ({
-      id: `e-${i}`,
-      source: edge.source,
-      target: edge.target,
-      type: "default",
-    }));
+    // Build edge pairs for path lookup
+    const pathEdges = new Set<string>();
+    if (playState?.attackerPath) {
+      const path = playState.attackerPath;
+      for (let i = 0; i < path.length - 1; i++) {
+        pathEdges.add(`${path[i]}->${path[i + 1]}`);
+        pathEdges.add(`${path[i + 1]}->${path[i]}`); // undirected
+      }
+    }
+
+    const edges: Edge[] = topology.edges.map((edge, i) => {
+      const edgeKey1 = `${edge.source}->${edge.target}`;
+      const isOnPath = pathEdges.has(edgeKey1);
+
+      return {
+        id: `e-${i}`,
+        source: edge.source,
+        target: edge.target,
+        type: "default",
+        animated: isOnPath,
+        style: isOnPath
+          ? { stroke: "#ef4444", strokeWidth: 3 }
+          : undefined,
+      };
+    });
 
     return { nodes, edges };
-  }, [topology, solution, selectedNodeId]);
+  }, [topology, solution, selectedNodeId, playState]);
 }

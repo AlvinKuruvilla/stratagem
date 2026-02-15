@@ -8,13 +8,14 @@ import {
 import "@xyflow/react/dist/style.css";
 import { useGameStore } from "../../state/useGameStore";
 import { useLayoutNodes } from "./useLayoutNodes";
+import type { PlayStateForGraph } from "./useLayoutNodes";
 import GraphNode from "./GraphNode";
 
 const nodeTypes: NodeTypes = {
   gameNode: GraphNode,
 };
 
-function GraphLegend() {
+function SolverLegend() {
   return (
     <div className="absolute bottom-3 left-3 z-10 w-[140px] rounded-lg bg-surface-1/80 backdrop-blur-sm border border-border-default text-[10px] text-gray-400 overflow-hidden">
       {/* Detection Probability */}
@@ -65,10 +66,66 @@ function GraphLegend() {
   );
 }
 
+function PlayLegend() {
+  return (
+    <div className="absolute bottom-3 left-3 z-10 w-[140px] rounded-lg bg-surface-1/80 backdrop-blur-sm border border-border-default text-[10px] text-gray-400 overflow-hidden">
+      <div className="px-2.5 py-2 space-y-1.5">
+        <p className="font-semibold text-gray-300 tracking-wide uppercase text-[9px]">
+          Play Mode
+        </p>
+        <div className="space-y-1">
+          <div className="flex items-center gap-1.5">
+            <div className="w-3 h-3 rounded-sm border-2 border-red-500 shrink-0" />
+            <span>Attacker</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-3 h-3 rounded-sm border-2 border-amber-500 bg-amber-900/50 shrink-0" />
+            <span>Compromised</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-3 h-3 rounded-sm border-2 border-dashed border-blue-400 shrink-0" />
+            <span>Entry point</span>
+          </div>
+        </div>
+      </div>
+      <div className="px-2.5 py-2 border-t border-border-muted space-y-1.5">
+        <p className="font-semibold text-gray-300 tracking-wide uppercase text-[9px]">
+          Assets
+        </p>
+        <div className="space-y-1">
+          <div className="flex items-center gap-1.5">
+            <div className="w-2 h-2 rounded-full bg-purple-500 shrink-0" />
+            <span>Honeypot</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-2 h-2 rounded-full bg-cyan-500 shrink-0" />
+            <span>Decoy Cred</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
+            <span>Honeytoken</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function NetworkGraph() {
-  const { topologyData, solution, selectedNodeId, setSelectedNode } =
+  const { mode, topologyData, solution, selectedNodeId, setSelectedNode, play } =
     useGameStore();
-  const { nodes, edges } = useLayoutNodes(topologyData, solution, selectedNodeId);
+
+  const playState: PlayStateForGraph | null =
+    mode === "play" && play.status !== "idle"
+      ? {
+          attackerPosition: play.attackerPosition,
+          attackerPath: play.attackerPath,
+          compromisedNodes: play.compromisedNodes,
+          deployedAssets: play.deployedAssets,
+        }
+      : null;
+
+  const { nodes, edges } = useLayoutNodes(topologyData, solution, selectedNodeId, playState);
 
   const onNodeClick: NodeMouseHandler = (_, node) => {
     setSelectedNode(node.id === selectedNodeId ? null : node.id);
@@ -101,7 +158,7 @@ export default function NetworkGraph() {
             className="!bg-surface-2 !border-border-default !shadow-lg [&>button]:!bg-surface-2 [&>button]:!border-border-default [&>button]:!text-gray-400 [&>button:hover]:!bg-surface-3"
           />
         </ReactFlow>
-        <GraphLegend />
+        {mode === "play" ? <PlayLegend /> : <SolverLegend />}
       </div>
     </div>
   );

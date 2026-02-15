@@ -67,3 +67,86 @@ export interface SolveRequest {
   alpha: number;
   beta: number;
 }
+
+// ── Play mode types ──────────────────────────────────
+
+export interface PlayGameRequest {
+  topology: string;
+  budget: number;
+  max_rounds: number;
+  seed: number;
+  defender_strategy: string;
+}
+
+export interface DeployedAsset {
+  asset_type: string;
+  node_id: string;
+  detection_probability: number;
+  cost: number;
+}
+
+export interface AttackerAction {
+  action: string;
+  node_id: string;
+  technique_id: string;
+  success: boolean;
+  value: number;
+}
+
+export interface Detection {
+  node_id: string;
+  asset_type: string;
+  technique_id: string;
+}
+
+export interface ActionLogEntry {
+  round: number;
+  actor: "attacker" | "defender" | "system";
+  message: string;
+}
+
+export interface GameStartEvent {
+  topology_name: string;
+  max_rounds: number;
+  budget: number;
+  attacker_entry: string;
+  seed: number;
+}
+
+export interface DefenderSetupEvent {
+  deployed_assets: DeployedAsset[];
+  total_spent: number;
+  remaining_budget: number;
+}
+
+export interface RoundStartEvent {
+  round: number;
+  attacker_position: string;
+  compromised_nodes: string[];
+  attacker_path: string[];
+}
+
+export interface AttackerActionEvent {
+  round: number;
+  actions: AttackerAction[];
+  new_position: string;
+  compromised_nodes: string[];
+  exfiltrated_value: number;
+}
+
+export interface RoundResultEvent {
+  round: number;
+  detections: Detection[];
+  attacker_detected: boolean;
+  game_over: boolean;
+  winner: string;
+}
+
+export interface GameEndEvent {
+  winner: string;
+  rounds_played: number;
+  total_detections: number;
+  attacker_exfiltrated: number;
+  attacker_path: string[];
+  compromised_nodes: string[];
+}

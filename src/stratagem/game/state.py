@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import TypedDict
+from typing import Self
 
 from langgraph.graph import MessagesState
 
@@ -27,6 +27,15 @@ class DetectionEvent:
             "asset_type": self.asset_type,
             "technique_id": self.technique_id,
         }
+
+    @classmethod
+    def from_dict(cls, data: dict) -> Self:
+        return cls(
+            round=data["round"],
+            node_id=data["node_id"],
+            asset_type=data["asset_type"],
+            technique_id=data["technique_id"],
+        )
 
 
 @dataclass
@@ -54,6 +63,17 @@ class AttackerState:
             "exfiltrated_value": self.exfiltrated_value,
             "detected": self.detected,
         }
+
+    @classmethod
+    def from_dict(cls, data: dict) -> Self:
+        return cls(
+            position=data["position"],
+            access_levels={k: AccessLevel(v) for k, v in data.get("access_levels", {}).items()},
+            path=list(data.get("path", [])),
+            compromised_nodes=list(data.get("compromised_nodes", [])),
+            exfiltrated_value=float(data.get("exfiltrated_value", 0.0)),
+            detected=bool(data.get("detected", False)),
+        )
 
 
 @dataclass
@@ -89,6 +109,16 @@ class DefenderState:
             "remaining_budget": self.remaining_budget,
         }
 
+    @classmethod
+    def from_dict(cls, data: dict) -> Self:
+        defender = cls(
+            budget=float(data["budget"]),
+            total_spent=float(data.get("total_spent", 0.0)),
+        )
+        for asset_data in data.get("deployed_assets", []):
+            defender.deployed_assets.append(DeceptionAsset.from_dict(asset_data))
+        return defender
+
 
 class GameState(MessagesState):
     """Full game state passed through the LangGraph graph.
@@ -102,6 +132,7 @@ class GameState(MessagesState):
     attacker: dict
     defender: dict
     detections: list[dict]
+    actions_log: list[dict]  # Attacker actions this round, for detection processing.
     current_round: int
     max_rounds: int
     game_over: bool

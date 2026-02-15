@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from pydantic import BaseModel, Field
 
-
 # The solver endpoint accepts game parameters and returns equilibrium results.
 
 class SolveRequest(BaseModel):
@@ -78,3 +77,11 @@ class CompareResponse(BaseModel):
     uniform: SolutionResponse
     static: SolutionResponse
     heuristic: SolutionResponse
+
+
+class PlayGameRequest(BaseModel):
+    topology: str = "small"
+    budget: float = Field(default=10.0, ge=0)
+    max_rounds: int = Field(default=5, ge=1, le=50)
+    seed: int = 42
+    defender_strategy: str = "sse_optimal"  # sse_optimal | uniform | static | heuristic

@@ -5,7 +5,7 @@ from __future__ import annotations
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from stratagem.web.routes import compare, solver, topology
+from stratagem.web.routes import compare, play, solver, topology
 
 app = FastAPI(
     title="Stratagem",
@@ -23,6 +23,7 @@ app.add_middleware(
 app.include_router(topology.router)
 app.include_router(solver.router)
 app.include_router(compare.router)
+app.include_router(play.router)
 
 
 @app.get("/api/health")
