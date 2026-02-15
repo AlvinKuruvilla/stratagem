@@ -5,10 +5,7 @@ from __future__ import annotations
 from pydantic import BaseModel, Field
 
 
-# ---------------------------------------------------------------------------
-# Request models
-# ---------------------------------------------------------------------------
-
+# The solver endpoint accepts game parameters and returns equilibrium results.
 
 class SolveRequest(BaseModel):
     topology: str = Field(default="small", description="Topology preset (small/medium/large)")
@@ -17,10 +14,8 @@ class SolveRequest(BaseModel):
     beta: float = Field(default=1.0, ge=0, description="Attacker detection penalty scale")
 
 
-# ---------------------------------------------------------------------------
-# Response models
-# ---------------------------------------------------------------------------
-
+# Responses mirror the domain model so the frontend can render topology graphs
+# and per-node utility breakdowns without additional transformation.
 
 class NodeInfo(BaseModel):
     id: str

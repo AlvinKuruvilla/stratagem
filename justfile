@@ -10,9 +10,7 @@ pip := ".venv/bin/pip"
 default:
     @just --list
 
-# ---------------------------------------------------------------------------
-# Setup
-# ---------------------------------------------------------------------------
+# A fresh checkout needs a virtualenv and both Python and Node dependencies.
 
 # Create venv and install all deps (core + web + dev)
 setup:
@@ -28,9 +26,8 @@ install-backend:
 install-frontend:
     cd frontend && npm install
 
-# ---------------------------------------------------------------------------
-# Development
-# ---------------------------------------------------------------------------
+# During development the backend and frontend run as separate processes.
+# `just dev` launches both; the individual recipes are useful for debugging.
 
 # Start the FastAPI backend on port 8000
 backend *args="":
@@ -48,9 +45,7 @@ dev:
     just frontend &
     wait
 
-# ---------------------------------------------------------------------------
-# Quality
-# ---------------------------------------------------------------------------
+# Linting, formatting, type-checking, and tests — `just ci` runs them all.
 
 # Run the full test suite
 test *args="":
@@ -83,9 +78,7 @@ build-frontend:
 # Run all checks (lint, tests, typecheck)
 ci: check test typecheck
 
-# ---------------------------------------------------------------------------
-# Utility
-# ---------------------------------------------------------------------------
+# Convenience wrappers around the CLI and API for quick manual testing.
 
 # Launch the dashboard via the CLI entrypoint
 dashboard *args="":

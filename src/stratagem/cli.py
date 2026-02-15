@@ -40,9 +40,8 @@ def _resolve_topology(name: str) -> NetworkTopology:
     raise typer.Exit(1)
 
 
-# ---------------------------------------------------------------------------
-# Commands
-# ---------------------------------------------------------------------------
+# Each command below maps to a `stratagem <verb>` invocation. They share
+# _resolve_topology to accept either a preset name or a YAML file path.
 
 
 @app.command()

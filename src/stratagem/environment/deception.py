@@ -43,9 +43,8 @@ class DeceptionAsset:
         )
 
 
-# ---------------------------------------------------------------------------
-# Factory helpers — pre-configured asset templates
-# ---------------------------------------------------------------------------
+# These factory functions encode realistic cost/detection trade-offs: honeypots
+# are expensive but highly reliable, honeytokens are cheap but less certain.
 
 def honeypot(node_id: str, service: Service) -> DeceptionAsset:
     """Deploy a fake service that looks real to an attacker.

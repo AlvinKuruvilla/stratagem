@@ -47,14 +47,12 @@ class Technique:
         return bool(self.required_services & set(node.services))
 
 
-# ---------------------------------------------------------------------------
-# Curated technique catalog
-# ---------------------------------------------------------------------------
-# Each entry is derived from real ATT&CK technique IDs but parameterized for
-# the simulation. Success rates and noise levels are tuned for game balance.
+# Each entry below is derived from a real ATT&CK technique ID but parameterized
+# for the simulation. Success rates and noise levels are tuned for game balance
+# rather than real-world accuracy — the goal is a meaningful decision space.
 
 TECHNIQUE_CATALOG: list[Technique] = [
-    # -- Initial Access --
+    # Initial Access
     Technique(
         id="T1190",
         name="Exploit Public-Facing Application",
@@ -77,7 +75,7 @@ TECHNIQUE_CATALOG: list[Technique] = [
         required_services=frozenset({Service.SSH, Service.RDP}),
         supported_os=None,
     ),
-    # -- Execution --
+    # Execution
     Technique(
         id="T1059.004",
         name="Unix Shell Command Execution",
@@ -100,7 +98,7 @@ TECHNIQUE_CATALOG: list[Technique] = [
         required_services=frozenset({Service.SMB, Service.RDP}),
         supported_os=frozenset({OS.WINDOWS}),
     ),
-    # -- Privilege Escalation --
+    # Privilege Escalation
     Technique(
         id="T1068",
         name="Exploitation for Privilege Escalation",
@@ -123,7 +121,7 @@ TECHNIQUE_CATALOG: list[Technique] = [
         required_services=frozenset(),
         supported_os=None,
     ),
-    # -- Credential Access --
+    # Credential Access
     Technique(
         id="T1110",
         name="Brute Force",
@@ -157,7 +155,7 @@ TECHNIQUE_CATALOG: list[Technique] = [
         required_services=frozenset(),
         supported_os=None,
     ),
-    # -- Discovery --
+    # Discovery
     Technique(
         id="T1046",
         name="Network Service Discovery",
@@ -180,7 +178,7 @@ TECHNIQUE_CATALOG: list[Technique] = [
         required_services=frozenset(),
         supported_os=None,
     ),
-    # -- Lateral Movement --
+    # Lateral Movement
     Technique(
         id="T1021.001",
         name="Remote Desktop Protocol",
@@ -225,7 +223,7 @@ TECHNIQUE_CATALOG: list[Technique] = [
         required_services=frozenset({Service.HTTP, Service.HTTPS, Service.MYSQL, Service.POSTGRESQL}),
         supported_os=None,
     ),
-    # -- Collection --
+    # Collection
     Technique(
         id="T1005",
         name="Data from Local System",
@@ -248,7 +246,7 @@ TECHNIQUE_CATALOG: list[Technique] = [
         required_services=frozenset({Service.SMB, Service.FTP}),
         supported_os=None,
     ),
-    # -- Exfiltration --
+    # Exfiltration
     Technique(
         id="T1041",
         name="Exfiltration Over C2 Channel",

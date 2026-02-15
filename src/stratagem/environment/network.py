@@ -75,15 +75,11 @@ class NetworkTopology:
     graph: nx.Graph = field(default_factory=nx.Graph)
     name: str = "unnamed"
 
-    # -- Mutation -------------------------------------------------------------------
-
     def add_node(self, node_id: str, attrs: NodeAttributes) -> None:
         self.graph.add_node(node_id, **attrs.to_dict())
 
     def add_edge(self, src: str, dst: str, segment: str = "default") -> None:
         self.graph.add_edge(src, dst, segment=segment)
-
-    # -- Queries --------------------------------------------------------------------
 
     def get_attrs(self, node_id: str) -> NodeAttributes:
         return NodeAttributes.from_dict(self.graph.nodes[node_id])
@@ -120,8 +116,6 @@ class NetworkTopology:
             f"{entry} entry points, {hvt} high-value targets"
         )
 
-    # -- Serialization --------------------------------------------------------------
-
     def to_dict(self) -> dict:
         nodes = {}
         for nid in self.graph.nodes:
@@ -145,7 +139,8 @@ class NetworkTopology:
         with open(path) as f:
             return cls.from_dict(yaml.safe_load(f))
 
-    # -- Factory methods ------------------------------------------------------------
+    # The factory methods below build pre-configured topologies at three scales.
+    # Each follows the same layered pattern: DMZ → corporate LAN → internal tiers.
 
     @classmethod
     def small_enterprise(cls) -> Self:
@@ -262,14 +257,14 @@ class NetworkTopology:
         """50-node network: DMZ → corporate → dev → staging → production DB + executive subnet."""
         topo = cls(name="large_enterprise")
 
-        # -- DMZ (5 nodes) --
+        # DMZ
         topo.add_node("fw-ext-1", NodeAttributes(NodeType.FIREWALL, OS.LINUX, [Service.DNS], 2.0, is_entry_point=True))
         topo.add_node("fw-ext-2", NodeAttributes(NodeType.FIREWALL, OS.LINUX, [Service.DNS], 2.0, is_entry_point=True))
         topo.add_node("lb-1", NodeAttributes(NodeType.SERVER, OS.LINUX, [Service.HTTP, Service.HTTPS], 3.0))
         topo.add_node("web-1", NodeAttributes(NodeType.SERVER, OS.LINUX, [Service.HTTP, Service.HTTPS, Service.SSH], 4.0))
         topo.add_node("web-2", NodeAttributes(NodeType.SERVER, OS.LINUX, [Service.HTTP, Service.HTTPS, Service.SSH], 4.0))
 
-        # -- Corporate LAN (15 nodes) --
+        # Corporate LAN
         topo.add_node("core-rtr", NodeAttributes(NodeType.ROUTER, OS.LINUX, [Service.SSH], 4.0))
         topo.add_node("lan-rtr-1", NodeAttributes(NodeType.ROUTER, OS.LINUX, [Service.SSH], 3.0))
         topo.add_node("lan-rtr-2", NodeAttributes(NodeType.ROUTER, OS.LINUX, [Service.SSH], 3.0))
@@ -282,13 +277,13 @@ class NetworkTopology:
         topo.add_node("ad-1", NodeAttributes(NodeType.SERVER, OS.WINDOWS, [Service.SMB, Service.RDP, Service.DNS], 8.0))
         topo.add_node("vpn-1", NodeAttributes(NodeType.SERVER, OS.LINUX, [Service.SSH, Service.HTTPS], 6.0))
 
-        # -- Executive subnet (4 nodes) --
+        # Executive subnet — high-value workstations behind a dedicated router
         topo.add_node("exec-rtr", NodeAttributes(NodeType.ROUTER, OS.LINUX, [Service.SSH], 3.0))
         topo.add_node("exec-ws-1", NodeAttributes(NodeType.WORKSTATION, OS.WINDOWS, [Service.SMB, Service.RDP], 7.0))
         topo.add_node("exec-ws-2", NodeAttributes(NodeType.WORKSTATION, OS.WINDOWS, [Service.SMB, Service.RDP], 7.0))
         topo.add_node("exec-ws-3", NodeAttributes(NodeType.WORKSTATION, OS.WINDOWS, [Service.SMB, Service.RDP], 7.0))
 
-        # -- Dev zone (8 nodes) --
+        # Dev zone
         topo.add_node("fw-dev", NodeAttributes(NodeType.FIREWALL, OS.LINUX, [Service.SSH], 2.0))
         topo.add_node("ci-1", NodeAttributes(NodeType.SERVER, OS.LINUX, [Service.HTTP, Service.SSH], 6.0))
         topo.add_node("ci-2", NodeAttributes(NodeType.SERVER, OS.LINUX, [Service.HTTP, Service.SSH], 6.0))
@@ -297,21 +292,21 @@ class NetworkTopology:
         topo.add_node("repo-1", NodeAttributes(NodeType.SERVER, OS.LINUX, [Service.HTTP, Service.SSH], 7.0))
         topo.add_node("artifact-1", NodeAttributes(NodeType.SERVER, OS.LINUX, [Service.HTTP, Service.SSH, Service.FTP], 5.0))
 
-        # -- Staging (5 nodes) --
+        # Staging
         topo.add_node("fw-stg", NodeAttributes(NodeType.FIREWALL, OS.LINUX, [Service.SSH], 2.0))
         topo.add_node("stg-app-1", NodeAttributes(NodeType.SERVER, OS.LINUX, [Service.HTTP, Service.SSH], 5.0))
         topo.add_node("stg-app-2", NodeAttributes(NodeType.SERVER, OS.LINUX, [Service.HTTP, Service.SSH], 5.0))
         topo.add_node("stg-db-1", NodeAttributes(NodeType.DATABASE, OS.LINUX, [Service.MYSQL, Service.SSH], 6.0))
         topo.add_node("stg-db-2", NodeAttributes(NodeType.DATABASE, OS.LINUX, [Service.POSTGRESQL, Service.SSH], 6.0))
 
-        # -- Production DB tier (5 nodes) --
+        # Production DB tier — the crown jewels
         topo.add_node("fw-prod", NodeAttributes(NodeType.FIREWALL, OS.LINUX, [Service.SSH], 3.0))
         topo.add_node("prod-app-1", NodeAttributes(NodeType.SERVER, OS.LINUX, [Service.HTTP, Service.SSH], 7.0))
         topo.add_node("prod-db-1", NodeAttributes(NodeType.DATABASE, OS.LINUX, [Service.MYSQL, Service.SSH], 10.0))
         topo.add_node("prod-db-2", NodeAttributes(NodeType.DATABASE, OS.LINUX, [Service.POSTGRESQL, Service.SSH], 10.0))
         topo.add_node("prod-backup", NodeAttributes(NodeType.DATABASE, OS.LINUX, [Service.SSH, Service.FTP], 9.0))
 
-        # -- Edges: DMZ --
+        # Edges: DMZ
         topo.add_edge("fw-ext-1", "lb-1", segment="dmz")
         topo.add_edge("fw-ext-2", "lb-1", segment="dmz")
         topo.add_edge("lb-1", "web-1", segment="dmz")
@@ -319,7 +314,7 @@ class NetworkTopology:
         topo.add_edge("web-1", "core-rtr", segment="dmz-to-lan")
         topo.add_edge("web-2", "core-rtr", segment="dmz-to-lan")
 
-        # -- Edges: Corporate LAN --
+        # Edges: Corporate LAN
         topo.add_edge("core-rtr", "lan-rtr-1", segment="lan")
         topo.add_edge("core-rtr", "lan-rtr-2", segment="lan")
         topo.add_edge("core-rtr", "ad-1", segment="lan")
@@ -339,13 +334,13 @@ class NetworkTopology:
         topo.add_edge("ws-5", "ws-6", segment="lan")
         topo.add_edge("ws-7", "ws-8", segment="lan")
 
-        # -- Edges: Executive subnet --
+        # Edges: Executive subnet
         topo.add_edge("core-rtr", "exec-rtr", segment="lan-to-exec")
         topo.add_edge("exec-rtr", "exec-ws-1", segment="exec")
         topo.add_edge("exec-rtr", "exec-ws-2", segment="exec")
         topo.add_edge("exec-rtr", "exec-ws-3", segment="exec")
 
-        # -- Edges: Dev zone --
+        # Edges: Dev zone
         topo.add_edge("lan-rtr-2", "fw-dev", segment="lan-to-dev")
         topo.add_edge("fw-dev", "ci-1", segment="dev")
         topo.add_edge("fw-dev", "ci-2", segment="dev")
@@ -358,14 +353,14 @@ class NetworkTopology:
         topo.add_edge("dev-1", "dev-2", segment="dev")
         topo.add_edge("dev-3", "dev-4", segment="dev")
 
-        # -- Edges: Staging --
+        # Edges: Staging
         topo.add_edge("ci-1", "fw-stg", segment="dev-to-stg")
         topo.add_edge("fw-stg", "stg-app-1", segment="staging")
         topo.add_edge("fw-stg", "stg-app-2", segment="staging")
         topo.add_edge("stg-app-1", "stg-db-1", segment="staging")
         topo.add_edge("stg-app-2", "stg-db-2", segment="staging")
 
-        # -- Edges: Production --
+        # Edges: Production
         topo.add_edge("core-rtr", "fw-prod", segment="lan-to-prod")
         topo.add_edge("fw-prod", "prod-app-1", segment="prod")
         topo.add_edge("prod-app-1", "prod-db-1", segment="prod")
