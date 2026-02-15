@@ -17,6 +17,15 @@ const STRATEGY_COLORS: Record<string, string> = {
   Heuristic: "#14b8a6",
 };
 
+const tooltipStyle = {
+  backgroundColor: "#111113",
+  border: "1px solid #27272a",
+  borderRadius: "8px",
+  fontSize: "12px",
+  fontFamily: "'JetBrains Mono', monospace",
+  boxShadow: "0 4px 12px rgba(0,0,0,0.4)",
+};
+
 export default function DefenderEUCompare() {
   const { comparison, showBaselines } = useGameStore();
   if (!showBaselines || !comparison) return null;
@@ -29,36 +38,34 @@ export default function DefenderEUCompare() {
   ];
 
   return (
-    <div className="rounded-lg border border-gray-800 bg-gray-900 p-4">
-      <h3 className="text-sm font-medium text-gray-400 mb-3">
-        Defender Expected Utility: SSE vs Baselines
-      </h3>
-      <ResponsiveContainer width="100%" height={200}>
-        <BarChart data={data} margin={{ left: 20, right: 20 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-          <XAxis
-            dataKey="name"
-            tick={{ fill: "#9ca3af", fontSize: 11 }}
-          />
-          <YAxis tick={{ fill: "#9ca3af", fontSize: 10 }} />
-          <Tooltip
-            contentStyle={{
-              backgroundColor: "#1f2937",
-              border: "1px solid #374151",
-              borderRadius: "6px",
-              fontSize: "12px",
-            }}
-          />
-          <Bar dataKey="eu" name="Defender EU">
-            {data.map((entry) => (
-              <Cell
-                key={entry.name}
-                fill={STRATEGY_COLORS[entry.name] ?? "#6b7280"}
-              />
-            ))}
-          </Bar>
-        </BarChart>
-      </ResponsiveContainer>
+    <div className="rounded-xl border border-border-default bg-surface-1 overflow-hidden">
+      <div className="px-5 py-3 border-b border-border-muted">
+        <h3 className="text-[11px] font-semibold tracking-widest text-gray-500 uppercase">
+          Defender Expected Utility
+        </h3>
+        <p className="text-xs text-gray-600 mt-0.5">SSE vs baseline strategies</p>
+      </div>
+      <div className="px-5 py-4">
+        <ResponsiveContainer width="100%" height={200}>
+          <BarChart data={data} margin={{ left: 20, right: 20 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#1e1e22" />
+            <XAxis
+              dataKey="name"
+              tick={{ fill: "#71717a", fontSize: 11 }}
+            />
+            <YAxis tick={{ fill: "#71717a", fontSize: 10 }} />
+            <Tooltip contentStyle={tooltipStyle} />
+            <Bar dataKey="eu" name="Defender EU" radius={[4, 4, 0, 0]}>
+              {data.map((entry) => (
+                <Cell
+                  key={entry.name}
+                  fill={STRATEGY_COLORS[entry.name] ?? "#6b7280"}
+                />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
     </div>
   );
 }

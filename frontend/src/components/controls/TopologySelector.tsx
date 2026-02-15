@@ -5,13 +5,10 @@ export default function TopologySelector() {
 
   return (
     <div>
-      <label className="block text-xs font-medium text-gray-400 mb-1">
-        Topology
-      </label>
       <select
         value={selectedTopology}
         onChange={(e) => setTopology(e.target.value)}
-        className="w-full rounded-md bg-gray-800 border border-gray-700 px-3 py-1.5 text-sm text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
+        className="w-full rounded-lg bg-surface-2 border border-border-default px-3 py-1.5 text-sm text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500/50 hover:border-gray-600"
       >
         {topologies.map((t) => (
           <option key={t.name} value={t.name}>

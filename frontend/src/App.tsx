@@ -9,7 +9,7 @@ import DefenderEUCompare from "./components/charts/DefenderEUCompare";
 import CoverageSideBySide from "./components/charts/CoverageSideBySide";
 
 export default function App() {
-  const { init, loading, error } = useGameStore();
+  const { init, loading, error, showBaselines } = useGameStore();
 
   useEffect(() => {
     init();
@@ -25,8 +25,15 @@ export default function App() {
       )}
 
       {error && (
-        <div className="rounded-md bg-red-950/50 border border-red-800/50 px-4 py-2 text-sm text-red-400">
-          Error: {error}
+        <div className="rounded-xl border border-red-500/20 bg-red-500/5 px-5 py-3 flex items-start gap-3">
+          <div className="mt-0.5 shrink-0 w-5 h-5 rounded-full bg-red-500/20 flex items-center justify-center">
+            <svg className="w-3 h-3 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </div>
+          <p className="text-sm text-red-400">
+            <span className="font-medium">Error:</span> {error}
+          </p>
         </div>
       )}
 
@@ -34,8 +41,13 @@ export default function App() {
       <NetworkGraph />
       <NodeDetailPanel />
       <AttackerEUChart />
-      <DefenderEUCompare />
-      <CoverageSideBySide />
+
+      {showBaselines && (
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+          <DefenderEUCompare />
+          <CoverageSideBySide />
+        </div>
+      )}
     </AppShell>
   );
 }

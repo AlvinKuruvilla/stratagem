@@ -9,12 +9,19 @@ import type { SolutionResponse } from "../../api/types";
 const NODE_WIDTH = 140;
 const NODE_HEIGHT = 50;
 
-/** Interpolate between green → yellow → red based on detection probability. */
+/** Muted coverage color for node backgrounds. */
 function coverageColor(p: number): string {
-  if (p <= 0) return "#374151"; // gray-700 (no coverage)
-  if (p < 0.3) return "#22c55e"; // green
-  if (p < 0.6) return "#eab308"; // yellow
-  return "#ef4444"; // red
+  if (p <= 0) return "#1e1e22"; // surface-ish gray (no coverage)
+  if (p < 0.3) return "#166534"; // green-800 muted
+  if (p < 0.6) return "#854d0e"; // yellow-800 muted
+  return "#991b1b"; // red-800 muted
+}
+
+/** Subtle glow for target / selected nodes. */
+function nodeBoxShadow(isTarget: boolean, isSelected: boolean): string {
+  if (isTarget) return "0 0 12px rgba(250, 204, 21, 0.25)";
+  if (isSelected) return "0 0 12px rgba(59, 130, 246, 0.25)";
+  return "none";
 }
 
 export function useLayoutNodes(
@@ -76,8 +83,8 @@ export function useLayoutNodes(
               ? "2px dashed #60a5fa"
               : isSelected
                 ? "2px solid #3b82f6"
-                : "1px solid #4b5563",
-          borderRadius: "6px",
+                : "1px solid #27272a",
+          borderRadius: "8px",
           color: "#f9fafb",
           fontSize: "11px",
           display: "flex",
@@ -87,6 +94,8 @@ export function useLayoutNodes(
           padding: "4px",
           opacity: 1,
           cursor: "pointer",
+          boxShadow: nodeBoxShadow(!!isTarget, isSelected),
+          transition: "border 0.15s ease, box-shadow 0.15s ease",
         },
       };
     });

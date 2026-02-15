@@ -20,9 +20,12 @@ export default function BudgetSlider() {
 
   return (
     <div>
-      <label className="block text-xs font-medium text-gray-400 mb-1">
-        Budget: {budget.toFixed(1)}
-      </label>
+      <div className="flex items-center justify-between mb-1">
+        <label className="text-xs font-medium text-gray-400">Budget</label>
+        <span className="text-[11px] font-mono bg-surface-2 text-gray-300 px-1.5 py-0.5 rounded">
+          {budget.toFixed(1)}
+        </span>
+      </div>
       <input
         type="range"
         min={0}
@@ -30,7 +33,7 @@ export default function BudgetSlider() {
         step={0.5}
         value={budget}
         onChange={(e) => setBudget(parseFloat(e.target.value))}
-        className="w-full accent-blue-500"
+        className="w-full"
       />
       <div className="flex justify-between text-[10px] text-gray-500 mt-0.5">
         <span>0</span>

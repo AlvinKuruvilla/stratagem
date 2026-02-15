@@ -25,11 +25,16 @@ export default function ParamControls() {
   }, [alpha, beta, fetchSolution, fetchComparison, showBaselines]);
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       <div>
-        <label className="block text-xs font-medium text-gray-400 mb-1">
-          Alpha (defender reward): {alpha.toFixed(1)}
-        </label>
+        <div className="flex items-center justify-between mb-1">
+          <label className="text-xs font-medium text-gray-400">
+            Alpha <span className="text-gray-600">(defender reward)</span>
+          </label>
+          <span className="text-[11px] font-mono bg-surface-2 text-gray-300 px-1.5 py-0.5 rounded">
+            {alpha.toFixed(1)}
+          </span>
+        </div>
         <input
           type="range"
           min={0.1}
@@ -37,13 +42,18 @@ export default function ParamControls() {
           step={0.1}
           value={alpha}
           onChange={(e) => setAlpha(parseFloat(e.target.value))}
-          className="w-full accent-blue-500"
+          className="w-full"
         />
       </div>
       <div>
-        <label className="block text-xs font-medium text-gray-400 mb-1">
-          Beta (attacker penalty): {beta.toFixed(1)}
-        </label>
+        <div className="flex items-center justify-between mb-1">
+          <label className="text-xs font-medium text-gray-400">
+            Beta <span className="text-gray-600">(attacker penalty)</span>
+          </label>
+          <span className="text-[11px] font-mono bg-surface-2 text-gray-300 px-1.5 py-0.5 rounded">
+            {beta.toFixed(1)}
+          </span>
+        </div>
         <input
           type="range"
           min={0.1}
@@ -51,7 +61,7 @@ export default function ParamControls() {
           step={0.1}
           value={beta}
           onChange={(e) => setBeta(parseFloat(e.target.value))}
-          className="w-full accent-blue-500"
+          className="w-full"
         />
       </div>
     </div>

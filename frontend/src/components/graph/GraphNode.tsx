@@ -23,21 +23,21 @@ export default function GraphNode({ data }: { data: GraphNodeData }) {
 
   return (
     <>
-      <Handle type="target" position={Position.Top} className="!bg-gray-600 !w-1.5 !h-1.5" />
+      <Handle type="target" position={Position.Top} className="!opacity-0 !w-2 !h-2" />
       <div className="flex flex-col items-center gap-0.5 select-none">
         <div className="flex items-center gap-1">
-          <span className="text-[9px] font-bold text-gray-300 bg-gray-800/60 px-1 rounded">
+          <span className="text-[9px] font-bold text-gray-400 bg-black/30 px-1 py-px rounded text-center leading-none">
             {icon}
           </span>
           <span className="font-medium truncate max-w-[90px]">{data.label}</span>
           {data.isTarget && <span className="text-yellow-400 text-[10px]">&#9733;</span>}
         </div>
-        <div className="text-[9px] text-gray-300 flex gap-2">
+        <div className="text-[9px] text-gray-300/80 font-mono flex gap-2">
           <span>v={data.value.toFixed(1)}</span>
           <span>p={data.detectionProb.toFixed(2)}</span>
         </div>
       </div>
-      <Handle type="source" position={Position.Bottom} className="!bg-gray-600 !w-1.5 !h-1.5" />
+      <Handle type="source" position={Position.Bottom} className="!opacity-0 !w-2 !h-2" />
     </>
   );
 }

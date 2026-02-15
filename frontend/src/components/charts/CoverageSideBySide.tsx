@@ -10,6 +10,15 @@ import {
 } from "recharts";
 import { useGameStore } from "../../state/useGameStore";
 
+const tooltipStyle = {
+  backgroundColor: "#111113",
+  border: "1px solid #27272a",
+  borderRadius: "8px",
+  fontSize: "12px",
+  fontFamily: "'JetBrains Mono', monospace",
+  boxShadow: "0 4px 12px rgba(0,0,0,0.4)",
+};
+
 export default function CoverageSideBySide() {
   const { comparison, showBaselines } = useGameStore();
   if (!showBaselines || !comparison) return null;
@@ -44,41 +53,39 @@ export default function CoverageSideBySide() {
   });
 
   return (
-    <div className="rounded-lg border border-gray-800 bg-gray-900 p-4">
-      <h3 className="text-sm font-medium text-gray-400 mb-3">
-        Per-Node Detection Probability: SSE vs Baselines
-      </h3>
-      <ResponsiveContainer width="100%" height={280}>
-        <BarChart data={data} margin={{ left: 20, right: 20 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-          <XAxis
-            dataKey="node"
-            tick={{ fill: "#9ca3af", fontSize: 9 }}
-            angle={-45}
-            textAnchor="end"
-            height={60}
-          />
-          <YAxis
-            tick={{ fill: "#9ca3af", fontSize: 10 }}
-            domain={[0, 1]}
-          />
-          <Tooltip
-            contentStyle={{
-              backgroundColor: "#1f2937",
-              border: "1px solid #374151",
-              borderRadius: "6px",
-              fontSize: "12px",
-            }}
-          />
-          <Legend
-            wrapperStyle={{ fontSize: "11px", color: "#9ca3af" }}
-          />
-          <Bar dataKey="SSE" fill="#3b82f6" />
-          <Bar dataKey="Uniform" fill="#a855f7" />
-          <Bar dataKey="Static" fill="#f97316" />
-          <Bar dataKey="Heuristic" fill="#14b8a6" />
-        </BarChart>
-      </ResponsiveContainer>
+    <div className="rounded-xl border border-border-default bg-surface-1 overflow-hidden">
+      <div className="px-5 py-3 border-b border-border-muted">
+        <h3 className="text-[11px] font-semibold tracking-widest text-gray-500 uppercase">
+          Per-Node Detection Probability
+        </h3>
+        <p className="text-xs text-gray-600 mt-0.5">SSE vs baseline strategies</p>
+      </div>
+      <div className="px-5 py-4">
+        <ResponsiveContainer width="100%" height={280}>
+          <BarChart data={data} margin={{ left: 20, right: 20 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#1e1e22" />
+            <XAxis
+              dataKey="node"
+              tick={{ fill: "#71717a", fontSize: 9 }}
+              angle={-45}
+              textAnchor="end"
+              height={60}
+            />
+            <YAxis
+              tick={{ fill: "#71717a", fontSize: 10 }}
+              domain={[0, 1]}
+            />
+            <Tooltip contentStyle={tooltipStyle} />
+            <Legend
+              wrapperStyle={{ fontSize: "11px", color: "#71717a" }}
+            />
+            <Bar dataKey="SSE" fill="#3b82f6" radius={[3, 3, 0, 0]} />
+            <Bar dataKey="Uniform" fill="#a855f7" radius={[3, 3, 0, 0]} />
+            <Bar dataKey="Static" fill="#f97316" radius={[3, 3, 0, 0]} />
+            <Bar dataKey="Heuristic" fill="#14b8a6" radius={[3, 3, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
     </div>
   );
 }
