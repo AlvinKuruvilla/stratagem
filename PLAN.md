@@ -43,28 +43,46 @@
 
 ---
 
-## Phase 2: Game Theory Core ⬅️ NEXT
+## Phase 2: Game Theory Core ✅
 
-### 2.1 Stackelberg Solver (`src/stratagem/game/solver.py`)
-- Implement **Multiple LPs** formulation (standard approach for Stackelberg security games):
-  - For each possible attacker pure strategy (attack path), solve an LP for the defender's optimal mixed strategy assuming the attacker plays that path
-  - Pick the LP solution that gives the defender the highest utility
-  - This is the Strong Stackelberg Equilibrium (SSE)
-- Utility functions:
-  - `defender_utility(state, defender_action, attacker_action)` — positive for detections, negative for successful compromises weighted by node value
-  - `attacker_utility(state, defender_action, attacker_action)` — positive for compromises, negative for detections
-- Use `scipy.optimize.linprog` for LP solving
-- Output: defender mixed strategy + attacker best response + expected utilities for both
+> **Status:** Complete — 75/75 tests passing, SSE solver + 3 baselines functional.
 
-### 2.2 Baselines (`src/stratagem/evaluation/baselines.py`)
-- `UniformRandomBaseline` — defender places deception assets uniformly at random
-- `StaticBaseline` — defender places assets on highest-value nodes deterministically
-- `HeuristicBaseline` — defender places assets on nodes with highest degree centrality (most connected)
-- All baselines implement the same interface as the Stackelberg solver for fair comparison
+### 2.1 Stackelberg Solver (`src/stratagem/game/solver.py`) ✅
+- **Multiple LPs** formulation (one LP per candidate attacker target)
+- Strong Stackelberg Equilibrium via `scipy.optimize.linprog`
+- Heterogeneous resource model (ERASER-style)
+- Utility model: U_d^c(t) = α·v(t), U_d^u(t) = −v(t), U_a^c(t) = −β·v(t), U_a^u(t) = v(t)
+- Output: defender mixed strategy, attacker best-response target, detection probabilities per node
+
+### 2.2 Baselines (`src/stratagem/evaluation/baselines.py`) ✅
+- `UniformRandomBaseline` — spreads budget evenly across nodes
+- `StaticBaseline` — greedily covers highest-value nodes
+- `HeuristicBaseline` — covers highest degree-centrality nodes
+- All return `StackelbergSolution` for fair comparison
 
 ---
 
-## Phase 3: LangGraph Agents
+## Phase 2.5: Web Dashboard ✅
+
+> **Status:** Complete — FastAPI backend + React 19 frontend with SaaS-polished UI.
+
+### Backend (`src/stratagem/web/`)  ✅
+- FastAPI with 3 routes: `/api/solve`, `/api/compare`, `/api/topologies`
+- CORS configured for localhost:5173
+- Pydantic request/response schemas
+
+### Frontend (`frontend/src/`) ✅
+- React 19 + TypeScript + Vite + Tailwind CSS v4
+- Network graph (React Flow + dagre layout) with coverage heatmap and **graph legend**
+- Budget/alpha/beta sliders with live debounced re-solving
+- Node detail panel with KaTeX math rendering of utility formulas
+- Charts: attacker EU per node, defender EU comparison, per-node detection probability (Recharts)
+- Zustand state management
+- Design system: Inter + JetBrains Mono fonts, surface/border tokens, custom form controls
+
+---
+
+## Phase 3: LangGraph Agents ⬅️ NEXT
 
 ### 3.1 Defender Agent (`src/stratagem/agents/defender.py`)
 - LangGraph node wrapping an LLM (GPT-4o or Claude)
@@ -145,9 +163,9 @@
 ## Implementation Order
 
 ```
-Phase 1 ✅ → 2.1 → 2.2 → 3.3 → 3.1 → 3.2 → 4.1 → 4.2 → 4.3 → 5.1 → 5.2
-              ^^^
-            YOU ARE HERE
+Phase 1 ✅ → Phase 2 ✅ → Phase 2.5 ✅ → 3.3 → 3.1 → 3.2 → 4.1 → 4.2 → 4.3 → 5.1 → 5.2
+                                           ^^^
+                                         YOU ARE HERE
 ```
 
 ## Resume Bullet Target
